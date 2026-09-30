@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doubly Linked List Explorer</title>
+<style>
+:root{
+  --head:#2E1A36; --th:#2E1A36; --heading:#2E1A36; --primary:#2E1A36; --primary-h:#452A50; --on-primary:#FFFFFF;
+  --accent:#B06F00; --accent-l:#FCEFD2; --accent-m:#F0C86E; --accent-fill:#E9A91F; --on-accent:#2E1A36;
+  --prevc:#6B4FA0; --prevc-l:#ECE6F7;
+  --nullc:#A12A1E; --null-l:#F9DEDA;
+  --ink:#221A26; --muted:#6B5F70; --surface:#F7F3F8; --line:#E2D9E5; --bg:#FFFFFF; --card:#FFFFFF;
+  --code:#2E1A36; --code-ink:#F3EAF5;
+  --serif:Cambria,"Source Serif Pro",Georgia,serif;
+  --sans:Calibri,"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+  --mono:"Courier New",ui-monospace,Menlo,Consolas,monospace;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --head:#1A0F20; --th:#3A2544; --heading:#F1E4F5; --primary:#E9A91F; --primary-h:#F5BD3E; --on-primary:#2E1A36;
+    --accent:#F0B43C; --accent-l:#3D2E12; --accent-m:#8A6620; --accent-fill:#E9A91F; --on-accent:#2E1A36;
+    --prevc:#B79CEB; --prevc-l:#2E2440;
+    --nullc:#F29A8E; --null-l:#4A1F1B;
+    --ink:#EDE6F0; --muted:#A99BB0; --surface:#22172A; --line:#3A2C42; --bg:#150E1A; --card:#1D1424;
+    --code:#1A0F20; --code-ink:#F3EAF5;
+  }
+}
+:root[data-theme="dark"]{
+  --head:#1A0F20; --th:#3A2544; --heading:#F1E4F5; --primary:#E9A91F; --primary-h:#F5BD3E; --on-primary:#2E1A36;
+  --accent:#F0B43C; --accent-l:#3D2E12; --accent-m:#8A6620; --accent-fill:#E9A91F; --on-accent:#2E1A36;
+  --prevc:#B79CEB; --prevc-l:#2E2440;
+  --nullc:#F29A8E; --null-l:#4A1F1B;
+  --ink:#EDE6F0; --muted:#A99BB0; --surface:#22172A; --line:#3A2C42; --bg:#150E1A; --card:#1D1424;
+  --code:#1A0F20; --code-ink:#F3EAF5;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--bg)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.45}
+button,input{font:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+code{font-family:var(--mono);font-size:.9em;background:var(--card);padding:1px 5px;border-radius:4px}
+
+header{background:var(--head);color:#fff;padding:28px clamp(16px,4vw,48px) 0}
+h1{font-family:var(--serif);font-size:clamp(28px,4vw,40px);line-height:1.1;margin:0 0 6px}
+header p{margin:0 0 22px;color:#DCCBE3;max-width:76ch}
+.picker{display:flex;gap:4px;flex-wrap:wrap}
+.picker button{border:0;background:transparent;color:#DCCBE3;padding:10px 14px;border-radius:8px 8px 0 0;font-size:15px}
+.picker button:hover{color:#fff;background:rgba(255,255,255,.08)}
+.picker button[aria-pressed="true"]{background:var(--bg);color:var(--heading);font-weight:700}
+
+main{display:grid;grid-template-columns:minmax(340px,440px) minmax(0,1fr);gap:32px;padding:28px clamp(16px,4vw,48px) 56px;max-width:1500px}
+aside{min-width:0}
+.sticky{position:sticky;top:12px}
+aside h2{font-family:var(--serif);font-size:24px;line-height:1.15;margin:0 0 8px;color:var(--heading)}
+pre.code{background:var(--code);color:var(--code-ink);font-family:var(--mono);font-size:13.5px;line-height:1.5;padding:12px 0;border-radius:10px;margin:0 0 14px;overflow:auto;max-height:calc(100vh - 230px);min-height:260px}
+pre.code .ln{display:block;padding:0 14px 0 0;white-space:pre}
+pre.code .no{display:inline-block;width:34px;text-align:right;margin-right:12px;color:#8A7894;user-select:none}
+pre.code .ln.now{background:rgba(245,192,74,.22);box-shadow:inset 4px 0 0 #F5C04A}
+pre.code .kw{color:#F5C04A;font-weight:700}
+pre.code .str{color:#A8E0B0}
+pre.code .cm{color:#B49DBE;font-style:italic}
+pre.code .bi{color:#8FC8FF}
+.tip{background:var(--accent-l);border-radius:10px;padding:12px 14px;font-size:15px;margin:0}
+.tip strong{color:var(--heading)}
+
+.stage-wrap{min-width:0}
+.editor{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px}
+.editor .lbl{font-weight:700;color:var(--heading)}
+.chip{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;background:var(--card);overflow:hidden}
+.chip span{font-family:var(--mono);font-size:12px;color:var(--muted);padding:0 4px 0 8px}
+.chip input{border:0;background:transparent;color:var(--ink);padding:6px 4px;width:14ch;min-width:6ch}
+.chip input:focus{outline:none}
+.chip:focus-within{box-shadow:0 0 0 2px var(--accent)}
+.chip button{border:0;background:transparent;color:var(--muted);font-size:18px;line-height:1;padding:4px 8px}
+.chip button:hover{color:var(--nullc);background:var(--null-l)}
+button.add{border:1px dashed var(--accent-m);background:var(--card);color:var(--accent);border-radius:8px;padding:6px 12px;font-size:14px}
+button.add:hover{background:var(--accent-l)}
+button.add:disabled{opacity:.4;cursor:not-allowed}
+.hint{font-size:14px;color:var(--muted);margin:0 0 14px}
+
+.mem{position:relative;overflow-x:auto;padding:6px 4px 14px;border-radius:12px;background:var(--surface)}
+.row{display:flex;align-items:flex-end;gap:78px;padding:8px 20px 4px;width:max-content;min-width:100%}
+.nodew{display:flex;flex-direction:column;align-items:center;gap:6px}
+.tags{display:flex;flex-direction:column-reverse;align-items:center;gap:4px;min-height:86px;justify-content:flex-start}
+.tag{font-family:var(--mono);font-size:13px;padding:2px 9px;border-radius:999px;border:1.5px solid var(--heading);color:var(--heading);background:var(--card);position:relative}
+.tag.nv{border-color:var(--line);color:var(--muted)}
+.tag.head{background:var(--accent-fill);border-color:var(--accent-fill);color:var(--on-accent);font-weight:700}
+.tag.current{border-color:var(--accent);color:var(--accent);font-weight:700}
+.tag.tail{border-color:var(--prevc);color:var(--prevc);font-weight:700}
+.tags .caret{color:var(--muted);font-size:12px;line-height:1;order:-1}
+.box{border:2px solid var(--heading);border-radius:10px;background:var(--card);min-width:190px;transition:opacity .25s}
+.box.ghost{border-style:dashed;border-color:var(--line);opacity:.55}
+.box.building{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-l)}
+.boxhead{display:flex;justify-content:space-between;gap:10px;padding:5px 10px;border-bottom:1px solid var(--line);font-size:13px}
+.boxhead b{font-family:var(--serif);color:var(--heading);font-size:15px}
+.boxhead .addr{font-family:var(--mono);color:var(--muted)}
+.cells{display:grid;grid-template-columns:auto 1fr auto}
+.cell{padding:4px 10px 8px;text-align:center;border-right:1px solid var(--line);transition:background .25s}
+.cell:last-child{border-right:0}
+.cell small{display:block;font-size:11px;color:var(--muted);letter-spacing:.02em}
+.cell .v{font-size:15px;font-weight:700;white-space:nowrap;display:block;min-height:1.4em}
+.cell.data .v{color:var(--ink)}
+.cell .ptr{display:inline-block;width:12px;height:12px;border-radius:50%;margin-top:4px}
+.cell.next .ptr{background:var(--accent)} .cell.prev .ptr{background:var(--prevc)}
+.cell .none{font-family:var(--mono);font-style:italic;font-size:13px;color:var(--nullc)}
+.cell .unset{color:var(--muted);font-weight:400}
+.cell.flash{background:var(--accent-l)}
+.ghosttxt{padding:22px 12px;color:var(--muted);font-size:14px;text-align:center}
+svg.arrows{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.legend{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 0;font-size:14px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:22px;height:3px;border-radius:2px;display:inline-block}
+
+.controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:16px 0 8px}
+.btn{border:1px solid var(--primary);background:var(--card);color:var(--heading);border-radius:8px;padding:8px 16px;font-weight:700;font-size:15px}
+.btn:hover{background:var(--surface)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--primary);color:var(--on-primary)}
+.btn.primary:hover{background:var(--primary-h)}
+.btn.quiet{border-color:var(--line);color:var(--muted);font-weight:400}
+label.speed{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:15px;margin-left:4px}
+select{font:inherit;font-size:15px;padding:5px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--ink)}
+.progress{margin-left:auto;color:var(--muted);font-size:15px}
+.narration{min-height:3.2em;margin:4px 0 0;padding:12px 14px;border-radius:10px;background:var(--surface);font-size:16px;max-width:86ch}
+
+.lower{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:24px;margin-top:24px}
+.lower h3{font-family:var(--serif);font-size:20px;color:var(--heading);margin:0 0 8px}
+table{border-collapse:collapse;font-size:15px;width:100%}
+th{background:var(--th);color:#fff;font-weight:700;text-align:left;padding:6px 10px;white-space:nowrap}
+td{padding:5px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--card)}
+td.mono{font-family:var(--mono);font-size:13px}
+td .none{font-family:var(--mono);font-style:italic;color:var(--nullc)}
+tr.changed td{background:var(--accent-l)}
+pre.console{background:var(--code);color:var(--code-ink);font-family:var(--mono);font-size:13.5px;line-height:1.5;padding:12px 14px;border-radius:10px;margin:0;min-height:120px;max-height:330px;overflow:auto;white-space:pre-wrap}
+pre.console .fresh{background:rgba(245,192,74,.28);border-radius:3px}
+pre.console .dim{color:#8A7894;font-style:italic}
+.small{font-size:13px;color:var(--muted);margin:6px 0 0}
+
+@media (max-width:1000px){main{grid-template-columns:1fr}.sticky{position:static}pre.code{max-height:380px}.lower{grid-template-columns:1fr}.progress{margin-left:0;width:100%}}
+@media (prefers-reduced-motion:reduce){.cell,.box{transition:none}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Doubly Linked List Explorer</h1>
+  <p>Step through the Python program line by line and watch the nodes, the prev and next pointers, and the output change. Rename the nodes or add more, and the code rewrites itself.</p>
+  <nav class="picker" id="picker" aria-label="Jump to part of the program"></nav>
+</header>
+
+<main>
+  <aside>
+    <div class="sticky">
+      <h2 id="secname"></h2>
+      <pre class="code" id="code" aria-label="Python program"></pre>
+      <p class="tip" id="tip"></p>
+    </div>
+  </aside>
+
+  <div class="stage-wrap">
+    <div class="editor" id="editor"></div>
+    <p class="hint">Edit a name and press Enter. Double quotes are removed so the Python stays valid. Use the ← and → keys to step.</p>
+
+    <div class="mem" id="mem">
+      <div class="row" id="row"></div>
+      <svg class="arrows" id="arrows" aria-hidden="true"></svg>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--accent)"></i>next pointer</span>
+      <span><i style="background:var(--prevc)"></i>prev pointer</span>
+      <span><i style="background:var(--nullc)"></i>None</span>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="back">Back</button>
+      <button class="btn primary" id="play">Play</button>
+      <button class="btn" id="step">Step</button>
+      <button class="btn" id="end">Run to end</button>
+      <label class="speed">Speed
+        <select id="speed"><option value="1500">Slow</option><option value="850" selected>Normal</option><option value="400">Fast</option><option value="150">Very fast</option></select>
+      </label>
+      <button class="btn quiet" id="restart">Restart</button>
+      <span class="progress" id="progress"></span>
+    </div>
+    <p class="narration" id="narr" aria-live="polite"></p>
+
+    <div class="lower">
+      <section>
+        <h3>Variables</h3>
+        <div id="vars"></div>
+        <p class="small">The id numbers are examples. Your own run of the program will print different numbers.</p>
+      </section>
+      <section>
+        <h3>Output</h3>
+        <pre class="console" id="out"></pre>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+const DEFAULT = ['Batman', 'Avengers', 'The Dark Knight'];
+let names = [...DEFAULT];
+const MAXN = 6;
+const ADDRS = [140512348213456, 140512348214800, 140512348213984, 140512348216288, 140512348215520, 140512348217104];
+const NONE_ID = 94662117373536;
+const addr = i => ADDRS[i];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const $ = id => document.getElementById(id);
+
+const SECTIONS = [
+  {k:'create',   label:'Create nodes', tip:'<strong>Key idea:</strong> each <code>Node(...)</code> call builds a new object in memory and runs <code>__init__</code> on it. <code>id()</code> gives the object\'s identity, which in CPython is its memory address. Both pointers start as <code>None</code>.'},
+  {k:'link',     label:'Link them', tip:'<strong>Key idea:</strong> every link in a doubly linked list needs two assignments: <code>A.next = B</code> and <code>B.prev = A</code>. Also notice that <code>head = node1</code> copies nothing. It is a second name for the same object.'},
+  {k:'print',    label:'Print details', tip:'<strong>Watch for:</strong> <code>id(node1.prev)</code> is really <code>id(None)</code>. None is a real object with its own id, so a number still prints. The last node\'s Next line prints <code>None</code> because that line skips <code>id()</code>.'},
+  {k:'forward',  label:'Forward traversal', tip:'<strong>Key idea:</strong> follow <code>next</code> from head. The loop stops when <code>current</code> becomes <code>None</code>, one step after the last node.'},
+  {k:'backward', label:'Backward traversal', tip:'<strong>Key idea:</strong> first walk to the tail with <code>next</code> (<code>while current.next</code> stops on the last node, not after it), then come back with <code>prev</code>. If the list kept a tail pointer, step 1 would not be needed.'},
+];
+
+/* ---------- code generation ---------- */
+function buildCode() {
+  const L = [], idx = {};
+  const add = (t, k) => { if (k) idx[k] = L.length; L.push(t); };
+  const N = names.length, v = i => `node${i + 1}`;
+  add('class Node:');
+  add('    def __init__(self, data):', 'init');
+  add('        self.data = data', 'initData');
+  add('        self.prev = None', 'initPrev');
+  add('        self.next = None', 'initNext');
+  add('');
+  add('# Create nodes');
+  names.forEach((n, i) => add(`${v(i)} = Node("${n}")`, 'create' + i));
+  add('');
+  add(`# Link them: ${names.map((_, i) => v(i)).join(' <-> ')}`);
+  add('head = node1  # Header node (head pointer)', 'head');
+  for (let i = 0; i < N - 1; i++) { add(`${v(i)}.next = ${v(i + 1)}`, 'next' + i); add(`${v(i + 1)}.prev = ${v(i)}`, 'prev' + i); }
+  add('');
+  add('# Print details of each node separately');
+  names.forEach((_, i) => {
+    add(`print("Node${i + 1}")`, `p${i}n`);
+    add(`print("Address:", id(${v(i)}))`, `p${i}a`);
+    add(`print("Data:", ${v(i)}.data)`, `p${i}d`);
+    add(`print("Prev:", id(${v(i)}.prev))`, `p${i}p`);
+    add(i === N - 1 ? `print("Next:", ${v(i)}.next)` : `print("Next:", id(${v(i)}.next))`, `p${i}x`);
+    add('print("------")', `p${i}s`);
+  });
+  add('');
+  add('#Forward Traversal');
+  add('print("Forward Traversal:")', 'fT');
+  add('current = head', 'fC');
+  add('while current:', 'fW');
+  add('    print(current.data, end=" <-> ")', 'fP');
+  add('    current = current.next', 'fN');
+  add('print("None")', 'fE');
+  add('');
+  add('#Backward Traversal');
+  add('print("Backward Traversal:")', 'bT');
+  add('#Step1: Go to the tail (last node)');
+  add('current = head', 'bC');
+  add('while current.next:  #Move until last node', 'bW');
+  add('    current = current.next', 'bN');
+  add('tail = current  #Now tail points to last node', 'bTail');
+  add('#Step 2: Traverse backwards using prev');
+  add('while tail:', 'bW2');
+  add('    print(tail.data, end=" <-> ")', 'bP');
+  add('    tail = tail.prev', 'bN2');
+  add('print("None")', 'bE');
+  return {L, idx};
+}
+
+/* ---------- trace: every step stores a full snapshot ---------- */
+let CODE, STEPS, SEC_START;
+function buildTrace() {
+  CODE = buildCode();
+  const idx = CODE.idx, N = names.length;
+  const s = {nodes: names.map(() => ({exists:false, building:false, data:undefined, prev:undefined, next:undefined})), vars:{}, varOrder:[], out:''};
+  const steps = [], secStart = {};
+  const clone = o => JSON.parse(JSON.stringify(o));
+  const nm = i => `<code>node${i + 1}</code>`;
+  const q = i => `"${esc(names[i])}"`;
+  const setVar = (k, v) => { if (!(k in s.vars)) s.varOrder.push(k); s.vars[k] = v; };
+  const push = (key, sec, narr, extra = {}) => {
+    if (!(sec in secStart)) secStart[sec] = steps.length;
+    steps.push({line: idx[key], sec, narr, st: clone(s), flash: extra.flash || null, fresh: extra.fresh || 0, changed: extra.changed || null});
+  };
+  const out = (key, sec, text, narr, extra = {}) => { s.out += text; push(key, sec, narr, {...extra, fresh: text.length}); };
+
+  // create
+  names.forEach((n, i) => {
+    const nd = s.nodes[i];
+    nd.exists = true; nd.building = true;
+    push('create' + i, 'create', `Python calls <code>Node(${q(i)})</code>. A new empty Node object is created at id <code>${addr(i)}</code>, and <code>__init__</code> runs with <code>self</code> set to it.`);
+    nd.data = n; push('initData', 'create', `<code>self.data = data</code> stores ${q(i)} in the new node.`, {flash:[i, 'data']});
+    nd.prev = null; push('initPrev', 'create', `<code>self.prev = None</code>: nothing comes before this node yet.`, {flash:[i, 'prev']});
+    nd.next = null; push('initNext', 'create', `<code>self.next = None</code>: nothing comes after this node yet.`, {flash:[i, 'next']});
+    nd.building = false; setVar(`node${i + 1}`, i);
+    push('create' + i, 'create', `<code>__init__</code> finishes, and the variable ${nm(i)} now refers to the object at id <code>${addr(i)}</code>.`, {changed:`node${i + 1}`});
+  });
+
+  // link
+  setVar('head', 0);
+  push('head', 'link', `<code>head = node1</code> makes <code>head</code> point to the same object as ${nm(0)} (id <code>${addr(0)}</code>). No new node is created.`, {changed:'head'});
+  for (let i = 0; i < N - 1; i++) {
+    s.nodes[i].next = i + 1;
+    push('next' + i, 'link', `${nm(i)}<code>.next = node${i + 2}</code>: the next field of ${q(i)} now holds a reference to ${q(i + 1)} (id <code>${addr(i + 1)}</code>).`, {flash:[i, 'next']});
+    s.nodes[i + 1].prev = i;
+    push('prev' + i, 'link', `${nm(i + 1)}<code>.prev = node${i + 1}</code>: the link now works in both directions.`, {flash:[i + 1, 'prev']});
+  }
+  if (N === 1) {} // nothing to link
+
+  // print
+  names.forEach((n, i) => {
+    const nd = s.nodes[i], last = i === N - 1;
+    out(`p${i}n`, 'print', `Node${i + 1}\n`, `Prints the heading for ${nm(i)}.`);
+    out(`p${i}a`, 'print', `Address: ${addr(i)}\n`, `<code>id(node${i + 1})</code> is the identity of the node itself.`);
+    out(`p${i}d`, 'print', `Data: ${n}\n`, `<code>node${i + 1}.data</code> is ${q(i)}.`);
+    if (nd.prev === null) out(`p${i}p`, 'print', `Prev: ${NONE_ID}\n`, `<code>node${i + 1}.prev</code> is None, so this prints <code>id(None)</code> = <code>${NONE_ID}</code>. That is the address of Python's one None object, not "no address".`, {flash:[i, 'prev']});
+    else out(`p${i}p`, 'print', `Prev: ${addr(nd.prev)}\n`, `<code>node${i + 1}.prev</code> is ${nm(nd.prev)}, so <code>id()</code> prints ${nm(nd.prev)}'s address. It matches that node's Address line.`, {flash:[i, 'prev']});
+    if (last) out(`p${i}x`, 'print', `Next: None\n`, `This line prints <code>node${i + 1}.next</code> without <code>id()</code>, so you see <code>None</code> itself.`, {flash:[i, 'next']});
+    else if (nd.next === null) out(`p${i}x`, 'print', `Next: ${NONE_ID}\n`, `<code>node${i + 1}.next</code> is None, so this prints <code>id(None)</code>.`, {flash:[i, 'next']});
+    else out(`p${i}x`, 'print', `Next: ${addr(nd.next)}\n`, `<code>node${i + 1}.next</code> is ${nm(nd.next)}, so this is ${nm(nd.next)}'s address.`, {flash:[i, 'next']});
+    out(`p${i}s`, 'print', `------\n`, `Separator line.`);
+  });
+
+  // forward
+  out('fT', 'forward', 'Forward Traversal:\n', 'Start of the forward traversal.');
+  setVar('current', 0);
+  push('fC', 'forward', `<code>current = head</code>: <code>current</code> starts at ${q(0)}.`, {changed:'current'});
+  let c = 0;
+  while (c !== null) {
+    push('fW', 'forward', `<code>current</code> is ${q(c)}, not None, so the loop body runs.`);
+    out('fP', 'forward', `${names[c]} <-> `, `Prints ${q(c)}. <code>end=" <-> "</code> keeps the output on the same line.`);
+    const nx = s.nodes[c].next;
+    setVar('current', nx);
+    push('fN', 'forward', nx === null ? `<code>current.next</code> is None, so <code>current</code> becomes None.` : `<code>current = current.next</code> moves to ${q(nx)}.`, {changed:'current', flash:[c, 'next']});
+    c = nx;
+  }
+  push('fW', 'forward', '<code>current</code> is None, so the loop ends.');
+  out('fE', 'forward', 'None\n', 'Prints None to show the end of the list, then a newline.');
+
+  // backward
+  out('bT', 'backward', 'Backward Traversal:\n', 'Start of the backward traversal.');
+  setVar('current', 0);
+  push('bC', 'backward', `Step 1: <code>current = head</code>. We have to find the last node first.`, {changed:'current'});
+  c = 0;
+  while (s.nodes[c].next !== null) {
+    push('bW', 'backward', `<code>current.next</code> is ${q(s.nodes[c].next)}, not None, so keep moving.`, {flash:[c, 'next']});
+    c = s.nodes[c].next; setVar('current', c);
+    push('bN', 'backward', `<code>current</code> moves to ${q(c)}.`, {changed:'current'});
+  }
+  push('bW', 'backward', `<code>current.next</code> is None, so ${q(c)} is the last node. The loop stops here, on the node, not after it.`, {flash:[c, 'next']});
+  setVar('tail', c);
+  push('bTail', 'backward', `<code>tail = current</code>: <code>tail</code> now points to the last node, ${q(c)}.`, {changed:'tail'});
+  let t = c;
+  while (t !== null) {
+    push('bW2', 'backward', `<code>tail</code> is ${q(t)}, not None, so the loop body runs.`);
+    out('bP', 'backward', `${names[t]} <-> `, `Prints ${q(t)}.`);
+    const pv = s.nodes[t].prev;
+    setVar('tail', pv);
+    push('bN2', 'backward', pv === null ? `<code>tail.prev</code> is None, so <code>tail</code> becomes None.` : `<code>tail = tail.prev</code> moves back to ${q(pv)}.`, {changed:'tail', flash:[t, 'prev']});
+    t = pv;
+  }
+  push('bW2', 'backward', '<code>tail</code> is None, so the loop ends.');
+  out('bE', 'backward', 'None\n', 'Done. The same nodes were printed in reverse order using only the prev pointers.');
+
+  STEPS = steps; SEC_START = secStart;
+}
+
+/* ---------- rendering ---------- */
+function pyHtml(line) {
+  let inStr = false, cut = -1;
+  for (let i = 0; i < line.length; i++) { if (line[i] === '"') inStr = !inStr; else if (line[i] === '#' && !inStr) { cut = i; break; } }
+  const code = cut >= 0 ? line.slice(0, cut) : line, cm = cut >= 0 ? line.slice(cut) : '';
+  const parts = code.split(/("[^"]*")/);
+  const h = parts.map((p, k) => k % 2 ? `<span class="str">${esc(p)}</span>` :
+    esc(p).replace(/\b(class|def|while|None|self)\b/g, '<span class="kw">$1</span>').replace(/\b(print|id)\b/g, '<span class="bi">$1</span>')).join('');
+  return h + (cm ? `<span class="cm">${esc(cm)}</span>` : '');
+}
+function renderCode() {
+  $('code').innerHTML = CODE.L.map((l, i) => `<span class="ln" data-l="${i}"><span class="no">${i + 1}</span>${pyHtml(l)}</span>`).join('');
+}
+
+function renderEditor() {
+  $('editor').innerHTML = `<span class="lbl">Nodes</span>` + names.map((n, i) =>
+    `<span class="chip"><span>node${i + 1}</span><input data-i="${i}" value="${esc(n)}" aria-label="Data for node${i + 1}" maxlength="24">` +
+    (names.length > 1 ? `<button data-rm="${i}" aria-label="Remove node${i + 1}">×</button>` : '') + `</span>`).join('') +
+    `<button class="add" id="addNode" ${names.length >= MAXN ? 'disabled' : ''}>Add node</button>` +
+    `<button class="add" id="resetNames">Reset to movies</button>`;
+}
+
+let pos = 0, timer = null;
+function cellHtml(nd, f, flash) {
+  const fl = flash ? ' flash' : '';
+  if (f === 'data') return `<div class="cell data${fl}" id="c-${nd.i}-data"><small>data</small><span class="v">${nd.data === undefined ? '<span class="unset">·</span>' : esc(nd.data)}</span></div>`;
+  const v = nd[f];
+  const inner = v === undefined ? '<span class="v unset">·</span>' : v === null ? '<span class="v none">None</span>' : `<span class="v"><span class="ptr"></span></span>`;
+  return `<div class="cell ${f}${fl}" id="c-${nd.i}-${f}"><small>${f}</small>${inner}</div>`;
+}
+function render() {
+  const S = STEPS[pos], st = S.st;
+  // code line
+  document.querySelectorAll('#code .ln.now').forEach(e => e.classList.remove('now'));
+  const ln = document.querySelector(`#code .ln[data-l="${S.line}"]`);
+  if (ln) {
+    ln.classList.add('now');
+    const pre = $('code'), top = ln.offsetTop - pre.clientHeight / 2 + 20;
+    pre.scrollTop = Math.max(0, top);
+  }
+  // section
+  const sec = SECTIONS.find(x => x.k === S.sec);
+  $('secname').textContent = sec.label;
+  $('tip').innerHTML = sec.tip;
+  document.querySelectorAll('#picker button').forEach(b => b.setAttribute('aria-pressed', b.dataset.k === S.sec));
+
+  // nodes
+  const pointing = names.map(() => []);
+  st.varOrder.forEach(k => { const v = st.vars[k]; if (v !== null && v !== undefined) pointing[v].push(k); });
+  $('row').innerHTML = st.nodes.map((nd, i) => {
+    nd.i = i;
+    const tags = pointing[i].map(k => {
+      const cls = /^node\d/.test(k) ? 'nv' : k;
+      return `<span class="tag ${cls}">${k}</span>`;
+    }).join('');
+    if (!nd.exists) return `<div class="nodew"><div class="tags"></div><div class="box ghost" id="b-${i}"><div class="ghosttxt">node${i + 1}<br>not created yet</div></div></div>`;
+    const fl = S.flash && S.flash[0] === i ? S.flash[1] : null;
+    return `<div class="nodew"><div class="tags">${tags ? `<span class="caret">▼</span>${tags}` : ''}</div>
+      <div class="box ${nd.building ? 'building' : ''}" id="b-${i}">
+        <div class="boxhead"><b>${nd.building ? 'new Node' : `node${i + 1}`}</b><span class="addr">id ${addr(i)}</span></div>
+        <div class="cells">${cellHtml(nd, 'prev', fl === 'prev')}${cellHtml(nd, 'data', fl === 'data')}${cellHtml(nd, 'next', fl === 'next')}</div>
+      </div></div>`;
+  }).join('');
+
+  // variables
+  if (!st.varOrder.length) $('vars').innerHTML = '<p class="small" style="margin:0">No variables yet.</p>';
+  else $('vars').innerHTML = `<table><thead><tr><th>Variable</th><th>Refers to</th><th>id</th></tr></thead><tbody>` +
+    st.varOrder.map(k => { const v = st.vars[k];
+      return `<tr class="${S.changed === k ? 'changed' : ''}"><td class="mono">${k}</td>` +
+        (v === null ? `<td><span class="none">None</span></td><td class="mono">${NONE_ID}</td>` : `<td>node${v + 1} (${esc(names[v])})</td><td class="mono">${addr(v)}</td>`) + `</tr>`; }).join('') + `</tbody></table>`;
+
+  // output
+  const o = st.out;
+  if (!o) $('out').innerHTML = '<span class="dim">Nothing printed yet.</span>';
+  else { const k = o.length - S.fresh; $('out').innerHTML = esc(o.slice(0, k)) + (S.fresh ? `<span class="fresh">${esc(o.slice(k))}</span>` : ''); }
+  $('out').scrollTop = $('out').scrollHeight;
+
+  $('narr').innerHTML = S.narr;
+  $('progress').textContent = `Step ${pos + 1} of ${STEPS.length}`;
+  $('back').disabled = pos === 0;
+  $('play').textContent = timer ? 'Pause' : (pos >= STEPS.length - 1 ? 'Replay' : 'Play');
+  requestAnimationFrame(drawArrows);
+}
+
+function drawArrows() {
+  const mem = $('mem'), svg = $('arrows'), mr = mem.getBoundingClientRect();
+  const W = mem.scrollWidth, H = mem.scrollHeight;
+  svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+  const st = STEPS[pos].st;
+  const P = el => { const r = el.getBoundingClientRect(); return {l:r.left - mr.left + mem.scrollLeft, r:r.right - mr.left + mem.scrollLeft, t:r.top - mr.top + mem.scrollTop, b:r.bottom - mr.top + mem.scrollTop}; };
+  let s = `<defs>
+    <marker id="mN" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent)"/></marker>
+    <marker id="mP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--prevc)"/></marker></defs>`;
+  st.nodes.forEach((nd, i) => {
+    if (!nd.exists) return;
+    ['next', 'prev'].forEach(f => {
+      const tgt = nd[f]; if (tgt === null || tgt === undefined) return;
+      const cell = document.getElementById(`c-${i}-${f}`), tb = document.getElementById(`b-${tgt}`);
+      if (!cell || !tb) return;
+      const c = P(cell), b = P(tb), dot = cell.querySelector('.ptr'); const d = dot ? P(dot) : c;
+      const x1 = (d.l + d.r) / 2, y1 = (d.t + d.b) / 2;
+      const off = f === 'next' ? -14 : 14, ty = (b.t + b.b) / 2 + off + 12;
+      const x2 = tgt > i ? b.l - 2 : b.r + 2;
+      const col = f === 'next' ? 'var(--accent)' : 'var(--prevc)', mk = f === 'next' ? 'mN' : 'mP';
+      const adj = Math.abs(tgt - i) === 1;
+      const bend = adj ? 0 : (f === 'next' ? -60 : 60);
+      const mx = (x1 + x2) / 2;
+      s += `<circle cx="${x1}" cy="${y1}" r="6" style="fill:${col}"/>`;
+      s += `<path d="M${x1},${y1} C${mx},${y1 + bend} ${mx},${ty + bend} ${x2},${ty}" fill="none" style="stroke:${col}" stroke-width="2.5" marker-end="url(#${mk})"/>`;
+    });
+  });
+  svg.innerHTML = s;
+}
+
+/* ---------- controls ---------- */
+function stop() { clearInterval(timer); timer = null; }
+function go(p) { pos = Math.max(0, Math.min(STEPS.length - 1, p)); render(); }
+function stepOnce() { if (pos >= STEPS.length - 1) { stop(); render(); return; } go(pos + 1); if (pos >= STEPS.length - 1) { stop(); render(); } }
+$('step').onclick = () => { stop(); stepOnce(); };
+$('back').onclick = () => { stop(); go(pos - 1); };
+$('end').onclick = () => { stop(); go(STEPS.length - 1); };
+$('restart').onclick = () => { stop(); go(0); };
+$('play').onclick = () => {
+  if (timer) { stop(); render(); return; }
+  if (pos >= STEPS.length - 1) pos = 0, render();
+  timer = setInterval(stepOnce, +$('speed').value);
+  render();
+};
+$('speed').onchange = () => { if (timer) { stop(); timer = setInterval(stepOnce, +$('speed').value); render(); } };
+document.addEventListener('keydown', e => {
+  if (e.target.matches('input, select')) return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); stop(); stepOnce(); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stop(); go(pos - 1); }
+});
+
+$('picker').innerHTML = SECTIONS.map(s => `<button data-k="${s.k}" aria-pressed="false">${s.label}</button>`).join('');
+$('picker').onclick = e => { const b = e.target.closest('button'); if (!b) return; stop(); const p = SEC_START[b.dataset.k]; if (p !== undefined) go(p); };
+
+function rebuildAll(keepSection) {
+  stop();
+  const sec = keepSection && STEPS ? STEPS[pos].sec : null;
+  buildTrace(); renderCode(); renderEditor();
+  pos = sec && SEC_START[sec] !== undefined ? SEC_START[sec] : 0;
+  render();
+}
+const clean = v => v.replace(/["\\]/g, '').trim() || 'node';
+$('editor').addEventListener('change', e => {
+  if (!e.target.matches('input')) return;
+  names[+e.target.dataset.i] = clean(e.target.value); rebuildAll(true);
+});
+$('editor').addEventListener('keydown', e => { if (e.target.matches('input') && e.key === 'Enter') e.target.blur(); });
+$('editor').addEventListener('click', e => {
+  const rm = e.target.closest('[data-rm]');
+  if (rm) { names.splice(+rm.dataset.rm, 1); rebuildAll(false); return; }
+  if (e.target.id === 'addNode' && names.length < MAXN) { names.push(['Joker', 'Inception', 'Interstellar', 'Oppenheimer', 'Tenet'].find(x => !names.includes(x)) || 'New movie'); rebuildAll(false); }
+  if (e.target.id === 'resetNames') { names = [...DEFAULT]; rebuildAll(false); }
+});
+window.addEventListener('resize', () => requestAnimationFrame(drawArrows));
+$('mem').addEventListener('scroll', () => requestAnimationFrame(drawArrows));
+
+rebuildAll(false);
+</script>
+</body>
+</html>
